@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>B&B Shuffle | Engine-V1</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="builder-styles.css">
+  <link rel="stylesheet" href="deck-styles.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Ubuntu:wght@300&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+  <link href="lightbox.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div id="viewrec">
+    B&B Shuffle - Engine-V1
+    <div id="version">Card list:</div>
+    <div id="date">Rev Date:</div>
+    <button id="deckselectoropen" class="open-button" onclick="opendeckselector()">Choose Deck</button>
+  </div>
+
+  <div class="form-popup" id="myForm">
+    <form class="form-container" onsubmit="updatedeck(deck.value);">
+      Available Decks:
+      <br>
+      <input type="radio" id="corev3" name="deck" value="CoreV3"><label for="corev3">CoreV3</label><br>
+      <input type="radio" id="spanish" name="deck" value="Spanish 1.0"><label for="spanish">Core-Spanish 1.0</label><br>
+      <input type="radio" id="expansion12" name="deck" value="Expansion1-2"><label for="expansion12">Core V3 plus Expansion</label><br>
+      <input type="radio" id="cloudSecurity" name="deck" value="Cloud Security"><label for="cloudSecurity">Cloud Security</label><br>
+      <input type="radio" id="datadog" name="deck" value="DataDog"><label for="datadog">DataDog</label><br>
+      <input type="radio" id="huntress" name="deck" value="Huntress"><label for="huntress">Huntress Deck</label><br>
+      <input type="radio" id="redCanary" name="deck" value="Red Canary"><label for="redCanary">Red Canary</label><br>
+      <input type="radio" id="DenSecure" name="deck" value="DenSecure"><label for="DenSecure">DenSecure</label><br>
+      <input type="radio" id="Trimarc" name="deck" value="Trimarc"><label for="Trimarc">Trimarc</label><br>
+      <input type="radio" id="icsotV1" name="deck" value="ICSOT"><label for="icsotV1">ICS/OTv1</label><br>
+      <input type="radio" id="EverythingDeck" name="deck" value="Everything Deck"><label for="EverythingDeck">The MEGA Deck</label><br>
+      <br>
+      <button type="submit" class="btn">Submit</button>
+      <button type="button" class="btn cancel" onclick="closedeckselector()">Close Deck Selector</button>
+    </form>
+  </div>
+
+  <div id="viewrecright">
+    Best viewed at 1920x1080<br>
+  </div>
+
+  <div id="solution">
+    DM Controls/Toggles:
+    <button onclick="diceboxtoggle()">D20</button>
+    <button onclick="notestoggle()">Notes</button> |
+    <button onclick="initinjectstoggle()">Starting Condition</button>
+    <button onclick="injectstoggle()">Injects</button>
+    <button id="consultantButton" onclick="consultantToggle()">Consultants</button> |
+    <button onclick="solutiontoggle()">Solution</button>
+    <button id="addonbuttonSolution" onclick="addonsolutiontoggle()">Add-On Solution</button>
+    <button onclick="scenariotoggle()">Scenario Tools</button>
+
+    <div id="dm_solution" style="display:none;">
+      <div class="solution" id="dma"><div class="warn">No Initial Compromise</div></div>
+      <div class="solution" id="dmb"><div class="warn">No Pivot & Escalate</div></div>
+      <div class="solution" id="dmc"><div class="warn">No C2 & Exfil</div></div>
+      <div class="solution" id="dmd"><div class="warn">No Persistence</div></div>
+    </div>
+
+    <div id="dm_addonsolution" style="display:none;">
+      <div class="addonsol" id="solIC"></div>
+      <div class="addonsol" id="solPE"></div>
+      <div class="addonsol" id="solCE"></div>
+      <div class="addonsol" id="solPER"></div>
+    </div>
+
+    <div id="dm_scenario" style="display:none;">
+      Scenario Tools:
+      <button onClick="rando()">Random</button>
+      <button onClick="customtoggle()">Custom</button> |
+      <button onclick="flipBack()">Flip Scenario</button>
+      <button id="addonbutton" onclick="addonscenariotoggle()">Add-On Scenario</button>
+      <button onClick='window.location.href=window.location.href'>Refresh Page</button>
+    </div>
+  </div>
+
+  <!-- Scenario Builder Menu (required by ui-builder.js) -->
+  <div id="builder" style="display:none;">
+    Scenario Builder
+    <button onclick="boxtoggle('ic');buildscenemenu('ic');">Initial Compromise</button>
+    <button onclick="boxtoggle('pv');buildscenemenu('pv');">Pivot</button>
+    <button onclick="boxtoggle('c2');buildscenemenu('c2');">C2</button>
+    <button onclick="boxtoggle('ps');buildscenemenu('ps');">Persist</button>
+    |
+    <button onclick="boxtoggle('proc');buildprocmenu();">Detections</button>
+    <button onclick="boxtoggle('start');buildinjmenu();">Starting Cond</button>
+    |
+    <input type="checkbox" id="forAddOn" name="Add-On" value="false">
+    <label for="forAddOn" id="forAddOnLabel" checked="false">For Add On</label>
+    <button onClick="customtoggle()">Close</button>
+
+    <div id="ic">Initial Compromise</div>
+    <div id="pv">Pivot</div>
+    <div id="c2">C2 & Exfil</div>
+    <div id="ps">Persist</div>
+    <div id="proc">Detections</div>
+    <div id="start">Starting Condition</div>
+  </div>
+
+  <header><h1 tabindex="0" class="title">SCENARIO</h1></header>
+  <section class="cards">
+    <div class="cards__single"><div id="inita" class="cards__front"></div><div class="cards__back"><div class="init" id="a"></div></div></div>
+    <div class="cards__single"><div id="initb" class="cards__front"></div><div class="cards__back"><div class="init" id="b"></div></div></div>
+    <div class="cards__single"><div id="initc" class="cards__front"></div><div class="cards__back"><div class="init" id="c"></div></div></div>
+    <div class="cards__single"><div id="initd" class="cards__front"></div><div class="cards__back"><div class="init" id="d"></div></div></div>
+  </section>
+
+  <!-- EXPANSION SCENARIO ADDONS (required by clear_addon/clear_ic etc.) -->
+  <div id="addonscenario" style="display:none;">
+    <div id="addonscenarioheader">
+      <header><h1 id="title">ADD-ON SCENARIO</h1></header>
+    </div>
+    <button id="buttIC" onclick="addIC()">Add Initial Compromise</button>
+    <button id="clearIC" onclick="clear_ic()">Clear Initial Compromise</button>
+    <button id="buttPE" onclick="addPE()">Add Pivot & Escalate</button>
+    <button id="clearPE" onclick="clear_pe()">Clear P&E</button>
+    <button id="buttCE" onclick="addCE()">Add C2 & EXFIL</button>
+    <button id="clearCE" onclick="clear_ce()">Clear C2 & Exfil</button>
+    <button id="buttPER" onclick="addPER()">Add Persist</button>
+    <button id="clearPER" onclick="clear_per()">Clear Persist</button>
+    |
+    <button onclick="flipBackAddOn()">Flip Add-On Cards</button>
+
+    <section class="expcards">
+      <div class="addons" id="addIC"></div>
+      <div class="addons" id="addPE"></div>
+      <div class="addons" id="addCE"></div>
+      <div class="addons" id="addPER"></div>
+    </section>
+    <br>
+  </div>
+
+  <header><center><h1 class="title">DETECTIONS</h1></center></header>
+  <center>
+    Established Detections:
+    <div class="establishedprocs" id="output"></div>
+    <div style="clear:both; margin-bottom:10px;"></div>
+    Other Detections:
+    <div class="otherprocs" id="remainder"></div>
+  </center>
+  <div style="clear:both; margin-bottom:10px;"></div>
+
+  <!-- INIT INJECT (required by initinjectstoggle) -->
+  <div id="initinject" style="display:none;">
+    <div id="initinjectheader">
+      <header><h2>Starting Condition</h2></header>
+    </div>
+    <div class="initinject" id="injectbox">
+      <button onClick="randcondition()">Random Condition</button>
+      <button onClick="customtoggle();boxtoggle('start');buildinjmenu()">Custom Condition</button>
+    </div>
+  </div>
+
+  <div id="injectdiv">
+    <div id="injectdivheader"><header><h1 class="title">INJECTS</h1></header></div>
+    <div id="something"></div>
+    <input type="button" onclick="update_ins()" value="DRAW INJECT"/>
+    <input type="button" onclick="rem_ins()" value="CLEAR"/>
+    <div><div id="e"></div></div>
+  </div>
+
+  <div id="consultantdiv">
+    <div id="consultantdivheader"><header><h1 id="title">CONSULTANTS</h1></header></div>
+    <div id="something"></div>
+    <input type="button" onclick="update_con()" value="DRAW CONSULTANT"/>
+    <input type="button" onclick="rem_con()" value="CLEAR"/>
+    <div><div id="f"></div></div>
+  </div>
+
+  <div id="gmnotes">
+    <div id="gmnotesheader"><header><h1>NOTES</h1></header></div>
+    <hr>
+    <textarea id="notes" rows="2" cols="13">((Type Here))</textarea>
+  </div>
+
+  <div id="copyright"></div>
+
+  <!-- Game Progress (turns & roll buttons) -->
+<div id="mydiv">
+  <div id="mydivheader">
+    <header><h1 tabindex="0">GAME PROGRESS</h1></header>
+  </div>
+  <span id="button"><input type="button" onclick="roll_dice(0)" value="Roll Dice"/></span>
+  <span id="button2"><input type="button" onclick="roll_dice(3)" value="Roll Dice (+3)"/></span>
+  <span id="button3"><button onClick="addturn()">Add Extra Turn</button></span>
+  <span id="button4"><button onClick="removeturn()">Remove Turn</button></span>
+
+  <div class="dice" id="dice_box">
+    <div id="dice"></div>
+    <div id="message"></div>
+    <div id="fails"></div>
+  </div>
+  <hr>
+  <div class="turn">TURNS REMAINING#:
+    <div id="turn">10</div>
+    <div id="turn_message"></div>
+  </div>
+  <div id="endgame"></div>
+</div>
+
+<!-- D20 Dice box -->
+<div id="dicebox">
+  <div id="diceboxheader">
+    <header><h1 tabindex="0">DiceBox</h1></header>
+  </div>
+  <span id="button"><input type="button" onclick="roll_d20(0)" value="Roll D20"/></span>
+  <div class="dice" id="dice_box">
+    <div id="d20"></div>
+  </div>
+</div>
+
+<!-- Movable counters (red circles 1,2,3,x,x,x) -->
+<div id="counter1" class="counter" style="top: 360px; left: 240px;">1</div>
+<div id="counter2" class="counter" style="top: 360px; left: 280px;">2</div>
+<div id="counter3" class="counter" style="top: 360px; left: 320px;">3</div>
+
+<div id="hold1" class="xcounter" style="top: 360px; left: 380px;">x</div>
+<div id="hold2" class="xcounter" style="top: 360px; left: 420px;">x</div>
+<div id="hold3" class="xcounter" style="top: 360px; left: 460px;">x</div>
+
+
+  <script src="lightbox.js"></script>
+  <script src="flip-script.js"></script>
+  <script src="card-script.js"></script>
+  <script src="dice-script.js"></script>
+  <script src="ui-script.js"></script>
+  <script src="ui-builder.js"></script>
+  <script src="deck-script.js"></script>
+
+  <!-- Initialisation -->
+  <script>
+    $('#forAddOn').prop('checked', false);
+    let selectedDeck = localStorage.getItem("deckKey");
+    if (selectedDeck == null) {
+      selectedDeck = "CoreV22";
+      console.log("deck is not found/initilized, setting to CoreV22");
+    }
+    initDeck();
+
+    const addOnCards = document.querySelectorAll(".cards__single");
+    function flipCard() {
+      this.classList.toggle("flip");
+      this.setAttribute("state", "flipped");
+      this.removeEventListener("click", flipCard);
+    }
+    addOnCards.forEach((card) => card.addEventListener("click", flipCard));
+
+    function flipBack() {
+      const backs = document.querySelectorAll(".cards__single");
+      backs.forEach((c) => {
+        if (c.getAttribute("state") == "flipped") {
+          c.classList.toggle("flip");
+          c.setAttribute("state", "back");
+          c.addEventListener("click", flipCard);
+        }
+      });
+    }
+
+    function flipBackAddOn() {
+      const addonbacks = document.querySelectorAll('[class^="cards__single_"]');
+      addonbacks.forEach((xc) => {
+        if (xc.getAttribute("state") == "flipped") {
+          xc.classList.toggle("flip");
+          xc.setAttribute("state", "back");
+          xc.addEventListener("click", flipCard);
+        } else {
+          xc.setAttribute("state", "back");
+          xc.addEventListener("click", flipCard);
+        }
+      });
+    }
+  </script>
+
+  <!-- === Procedure Filter (session-only; safe) === -->
+  <script>
+  (function () {
+    // Show the button immediately
+    ensureUI();
+
+    function ensureUI() {
+      if (document.getElementById('procFilterBtn')) return;
+      const btn = document.createElement('button');
+      btn.id = 'procFilterBtn';
+      btn.textContent = 'Filter Procedures';
+      btn.style.cssText =
+        'position:fixed;top:10px;right:10px;z-index:9999;padding:6px 10px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;';
+      document.body.appendChild(btn);
+
+      const modal = document.createElement('div');
+      modal.id = 'procFilterModal';
+      modal.style.cssText =
+        'position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10000;';
+      modal.innerHTML = `
+        <div style="background:#fff;padding:16px;max-width:560px;width:92%;max-height:78vh;overflow:auto;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);">
+          <h3 style="margin:0 0 8px">Procedure Cards</h3>
+          <p style="margin:0 0 12px">Uncheck to hide for this session. Click <b>Apply</b> to update display.</p>
+          <div id="procFilterList" style="margin:0 0 12px">Loading…</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button id="procApplyBtn">Apply</button>
+            <button id="procCloseBtn">Close</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+
+      btn.onclick = () => { buildList(); modal.style.display = 'flex'; };
+      modal.querySelector('#procCloseBtn').onclick = () => (modal.style.display = 'none');
+      modal.querySelector('#procApplyBtn').onclick = () => {
+        modal.style.display = 'none';
+        applyFilter();
+      };
+    }
+
+    let cached = [];          // [{name, img}]
+    const hiddenNames = new Set();
+
+    function getProceduresFromData() {
+      const h = window.cardData;
+      if (!h || !Array.isArray(h.data)) return [];
+      const seen = new Set();
+      const out = [];
+      h.data.forEach(x => {
+        if (x && x.type === 'procedure' && x.name && x.image) {
+          if (!seen.has(x.name)) {
+            seen.add(x.name);
+            out.push({ name: x.name, img: x.image });
+          }
+        }
+      });
+      return out.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function buildList() {
+      const list = document.getElementById('procFilterList');
+      const procs = getProceduresFromData();
+      cached = procs;
+      if (!procs.length) {
+        list.innerHTML = `<div style="color:#a00">Deck not loaded yet or no procedure entries found.</div>`;
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      procs.forEach(p => {
+        const row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #eee;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !hiddenNames.has(p.name);
+        cb.onchange = () => cb.checked ? hiddenNames.delete(p.name) : hiddenNames.add(p.name);
+        const span = document.createElement('span');
+        span.textContent = p.name;
+        row.appendChild(cb); row.appendChild(span);
+        frag.appendChild(row);
+      });
+      list.innerHTML = '';
+      list.appendChild(frag);
+    }
+
+    function applyFilter() {
+      if (!cached.length) return;
+      const nameToImg = new Map(cached.map(p => [p.name, p.img]));
+      const tiles = document.querySelectorAll('.proc img.procimg');
+      tiles.forEach(img => {
+        const src = img.getAttribute('src');
+        let shouldHide = false;
+        for (const [name, iurl] of nameToImg.entries()) {
+          if (src === iurl && hiddenNames.has(name)) {
+            shouldHide = true; break;
+          }
+        }
+        const box = img.closest('.proc');
+        if (box) box.style.display = shouldHide ? 'none' : '';
+      });
+    }
+
+    // Re-apply hiding whenever the engine re-renders detections
+    const mo = new MutationObserver(() => applyFilter());
+    window.addEventListener('load', () => {
+      const target = document.getElementById('remainder') || document.body;
+      mo.observe(target, { childList: true, subtree: true });
+    });
+  })();
+  </script>
+
+</body>
+</html>
